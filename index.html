@@ -184,7 +184,7 @@ function runBeat(s){const lines=(s.vo||'').split('|').filter(Boolean);
 function finishBeat(s){if(busy)return;
  if(s.type==='choice'){busy=true;showChoices(s);return}
  if(SET.auto){go(s.goto)}else{$('tapHint').style.display='block';$('stage').onclick=e=>{if(e.target.closest('#menu,#menuBtn'))return;go(s.goto)}}}
-function showChoices(s){stopAudio();const p=$('panel');p.innerHTML='';
+function showChoices(s){stopAudio();$('subs').innerHTML='';$('spoilerHost').innerHTML='';const p=$('panel');p.innerHTML='';
  if(s.ask)p.innerHTML+='<div id="ask">'+s.ask+'</div>';
  if(s.intel)p.innerHTML+='<div id="intel">'+s.intel+'</div>';
  s.options.forEach((o,i)=>{const b=document.createElement('button');b.className='opt';b.style.animationDelay=(0.15*i)+'s';
@@ -199,7 +199,7 @@ function runMeter(s){if(!G.round)G.meter=s.start;
  meterRound(s)}
 function meterRound(s){const r=s.rounds[G.round];
  if(!r){const win=G.meter>=s.gold;go(win?s.win:s.fail);return}
- const p=$('panel');p.innerHTML='<div id="ask">'+r.ask+'</div>'+(r.intel?'<div id="intel">'+r.intel+'</div>':'');
+ $('subs').innerHTML='';const p=$('panel');p.innerHTML='<div id="ask">'+r.ask+'</div>'+(r.intel?'<div id="intel">'+r.intel+'</div>':'');
  r.options.forEach((o,i)=>{const b=document.createElement('button');b.className='opt';b.style.animationDelay=(0.15*i)+'s';
   b.innerHTML=o.label+'<small>'+(o.tone||'')+'</small>';
   b.onclick=ev=>{ev.stopPropagation();p.style.display='none';
