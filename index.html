@@ -139,11 +139,18 @@ function applyFx(fx){if(!fx)return;const map={glory:T().glory,wisdom:T().wisdom,
 // media slot: image or video — swap by changing scenes.js media field only
 function renderMedia(s){const m=$('media');m.innerHTML='';
  const md=s.media||{};
- if(md.video){const v=document.createElement('video');v.src=md.video;v.autoplay=true;v.muted=true;v.loop=true;v.playsInline=true;m.appendChild(v);m.className='fadein';return}
+ if(md.video){const v=document.createElement('video');v.src=md.video;
+  v.muted=(md.muted!==undefined)?md.muted:!SET.voice; v.loop=!!md.loop; v.playsInline=true; v.autoplay=true;
+  v.onerror=()=>{if(md.img){const im=document.createElement('img');im.className=(s.kb||'kb-in');im.src=md.img;m.innerHTML='';m.appendChild(im)}else{m.innerHTML='<div class="fallback"><span></span></div>'}};
+  m.appendChild(v);m.className='fadein';
+  v.play().catch(()=>{v.muted=true;v.play().catch(()=>{})});
+  return}
  if(md.img){const im=document.createElement('img');im.className=(s.kb||'kb-in');im.src=md.img;
   im.onerror=()=>{const note=['title','results','death'].includes(s.type)?'':(s.phase||'')+'<br><br>[ artwork loading soon ]';m.innerHTML='<div class="fallback"><span>'+note+'</span></div>'};
   m.appendChild(im);m.className='fadein';return}
  m.innerHTML='<div class="fallback"><span></span></div>'}
+function duckBgm(){if(bgm&&bgm!=='none'){if(bgm._prevVol===undefined)bgm._prevVol=bgm.volume;bgm.volume=0.06}}
+function restoreBgm(){if(bgm&&bgm!=='none'&&bgm._prevVol!==undefined){bgm.volume=bgm._prevVol}}
 function stopAudio(){if(voAudio){voAudio.pause();voAudio=null}if(timer){clearTimeout(timer);timer=null}}
 function playVO(id,lines,perLine){if(!SET.voice)return null;
  const a=new Audio('assets/vo/'+id+'.mp3');voAudio=a;
@@ -152,7 +159,8 @@ function playVO(id,lines,perLine){if(!SET.voice)return null;
 function ensureBgm(){if(!bgm){bgm=new Audio('assets/bgm.mp3');bgm.loop=true;bgm.volume=0.28;bgm.onerror=()=>{bgm='none'}}
  if(bgm!=='none'){SET.music?bgm.play().catch(()=>{}):bgm.pause()}}
 // ---- scene runner ----
-function go(id){stopAudio();$('panel').style.display='none';$('react').style.display='none';
+function go(id){stopAudio();const oldVid=$('media').querySelector('video');if(oldVid)oldVid.pause();
+ $('panel').style.display='none';$('react').style.display='none';
  $('subs').innerHTML='';$('spoilerHost').innerHTML='';$('veilHost').innerHTML='';$('meterbox').style.display='none';
  const s=loc(id);if(!s){$('subs').innerHTML='<div class="subline">Missing scene: '+id+'</div>';return}
  G.scene=id;if(s.type!=='meter'){G.round=0}save();
@@ -166,7 +174,8 @@ function go(id){stopAudio();$('panel').style.display='none';$('react').style.dis
  if(s.type==='death')return veilDeath(s);
  if(s.type==='meter')return runMeter(s);
  runBeat(s)}
-function runBeat(s){const lines=(s.vo||'').split('|').filter(Boolean);
+function runBeat(s){if(s.media&&s.media.video&&s.caption!==undefined){return runVideoBeat(s)}
+ const lines=(s.vo||'').split('|').filter(Boolean);
  const perLine={t:2.9};let i=0;busy=false;
  playVO(G.scene,lines.length,perLine);
  const next=()=>{if(i<lines.length){const d=document.createElement('div');d.className='subline';d.textContent=lines[i];
@@ -181,6 +190,19 @@ function runBeat(s){const lines=(s.vo||'').split('|').filter(Boolean);
  $('stage').onclick=e=>{if(e.target.closest('#menu,#menuBtn,.opt,.bigbtn'))return;
   clearTimeout(timer);
   if(i<lines.length){next()}else if(s.spoiler&&!$('spoilerHost').innerHTML){next()}else{finishBeat(s)}}}
+function runVideoBeat(s){busy=false;
+ const d=document.createElement('div');d.className='subline';d.textContent=s.caption;
+ $('subs').innerHTML='';$('subs').appendChild(d);
+ duckBgm();
+ let advanced=false;
+ const advance=()=>{if(advanced)return;advanced=true;restoreBgm();
+  if(s.spoiler&&!$('spoilerHost').innerHTML){$('spoilerHost').innerHTML='<div id="spoiler">'+s.spoiler+'</div>';timer=setTimeout(()=>finishBeat(s),3400);return}
+  finishBeat(s)};
+ const vid=$('media').querySelector('video');
+ if(vid){vid.onended=advance;timer=setTimeout(advance,10800)}else{timer=setTimeout(advance,4000)}
+ $('stage').onclick=e=>{if(e.target.closest('#menu,#menuBtn,.opt,.bigbtn'))return;
+  clearTimeout(timer);
+  if(!advanced){advance()}else if(s.spoiler&&$('spoilerHost').innerHTML){finishBeat(s)}}}
 function finishBeat(s){if(busy)return;
  if(s.type==='choice'){busy=true;showChoices(s);return}
  if(SET.auto){go(s.goto)}else{$('tapHint').style.display='block';$('stage').onclick=e=>{if(e.target.closest('#menu,#menuBtn'))return;go(s.goto)}}}
@@ -243,7 +265,8 @@ function paintMenu(){const t=T();
  '<div class="mrow" onclick="closeMenu()">'+t.close+'</div>'+
  '<div class="credit">'+t.credit+'</div>'}
 function tgl(k){SET[k]=!SET[k];saveSet();paintMenu();
- if(k==='music')ensureBgm();if(k==='voice'&&!SET.voice)stopAudio()}
+ if(k==='music')ensureBgm();
+ if(k==='voice'){if(!SET.voice)stopAudio();const v=$('media').querySelector('video');if(v&&G.scene!=='M1')v.muted=!SET.voice}}
 function tglLang(){SET.lang=SET.lang==='zh'?'en':'zh';saveSet();paintMenu();go(G.scene)}
 function restartAll(){stopAudio();localStorage.removeItem(SAVE);G=fresh();closeMenu();go('S01')}
 // boot

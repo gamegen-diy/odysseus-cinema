@@ -28,7 +28,8 @@ S04:{type:'beat', phase:'TROY — YEAR TEN', objective:'Wake up',
  goto:'S05'},
 
 S05:{type:'beat', phase:'TROY — YEAR TEN', objective:'Wake up',
- media:{img:'assets/img/s05.jpg'}, kb:'kb-in',
+ media:{img:'assets/img/s05.jpg', video:'assets/vid/s05.mp4'}, kb:'kb-in',
+ caption:'I have read this book. Cover to cover. Twice.',
  vo:'Odysseus. Sacker of cities. The unluckiest sailor who will ever live.|You have read his story. Cover to cover. Twice.|Tonight, you are wearing it.',
  spoiler:'🔮 SPOILERS FROM THE BOOK: The horse works. Troy burns by dawn. The homecoming is the problem.',
  prompt:'Epic film still, vertical 2:3: bearded Greek warrior reflected in a polished bronze shield he holds up, warm lamplight, sharp intelligent eyes, photorealistic, intimate cinematic portrait, no text',
@@ -96,13 +97,14 @@ S11:{type:'beat', phase:'THE ISLAND', objective:'Do not enter the cave. (You wil
  goto:'S12'},
 
 S12:{type:'beat', phase:'THE CAVE', objective:'He is home.',
- media:{img:'assets/img/s12.jpg'}, kb:'kb-in',
+ media:{img:'assets/img/s12.jpg', video:'assets/vid/s12.mp4'}, kb:'kb-in',
+ caption:'Strangers... WHO are you, little things? Speak.',
  vo:'The boulder seals the door like a coin dropped on an ant.|One eye — taller than your mast — finds you in the firelight.|“Strangers,” it says. “Who are you?”',
  prompt:'Epic film still, vertical 2:3: a colossal one-eyed giant cyclops face illuminated by firelight inside a cave, single huge eye reflecting tiny frightened soldiers, wild hair and beard, photorealistic creature design, terrifying, no text',
  goto:'M1'},
 
 M1:{type:'meter', phase:'PROLOGUE BOSS', objective:'Make him believe you are nobody at all',
- media:{img:'assets/img/s12.jpg'},
+ media:{img:'assets/img/s12.jpg', video:'assets/vid/s12.mp4', muted:true, loop:true},
  title:'THE GIANT’S SUSPICION', goalText:'Read what the monster wants to hear. Cross the gold line, and you walk out of this cave.',
  start:35, gold:75, fail:'D1',
  rounds:[
@@ -149,7 +151,8 @@ S15a:{type:'beat', phase:'OFF SCRIPT', objective:'The engine of the epic — unp
  goto:'S16'},
 
 S15b:{type:'beat', phase:'AS WRITTEN', objective:'The sea has your address now',
- media:{img:'assets/img/s15b.jpg'}, kb:'kb-in',
+ media:{img:'assets/img/s15b.jpg', video:'assets/vid/s15b.mp4'}, kb:'kb-in',
+ caption:'You told me your name. Now I know whose ships to drown.',
  vo:'It bursts out of you, glorious and fatal, rolling across the water.|Deep below, a father hears his son’s scream — and a name.|“You told me your name,” says the sea. “Now I know whose ships to drown.” Exactly as written.',
  prompt:'Epic film still, vertical 2:3: the sea god rising behind a small Greek galley, trident raised, storm forming from clear sky, colossal silhouette against green-black water, photorealistic, dread and majesty, no text',
  goto:'S16'},
