@@ -152,9 +152,9 @@ function renderMedia(s){const m=$('media');m.innerHTML='';
 function duckBgm(){if(bgm&&bgm!=='none'){if(bgm._prevVol===undefined)bgm._prevVol=bgm.volume;bgm.volume=0.06}}
 function restoreBgm(){if(bgm&&bgm!=='none'&&bgm._prevVol!==undefined){bgm.volume=bgm._prevVol}}
 function stopAudio(){if(voAudio){voAudio.pause();voAudio=null}if(timer){clearTimeout(timer);timer=null}}
-function playVO(id,lines,perLine){if(!SET.voice)return null;
+function playVO(id,state){if(!SET.voice)return null;
  const a=new Audio('assets/vo/'+id+'.mp3');voAudio=a;
- a.onloadedmetadata=()=>{if(a.duration&&lines>0){perLine.t=Math.max(1.6,(a.duration+0.6)/lines)}};
+ a.onloadedmetadata=()=>{if(a.duration)state.dur=a.duration};
  a.onerror=()=>{voAudio=null};a.play().catch(()=>{});return a}
 function ensureBgm(){if(!bgm){bgm=new Audio('assets/bgm.mp3');bgm.loop=true;bgm.volume=0.28;bgm.onerror=()=>{bgm='none'}}
  if(bgm!=='none'){SET.music?bgm.play().catch(()=>{}):bgm.pause()}}
@@ -174,21 +174,36 @@ function go(id){stopAudio();const oldVid=$('media').querySelector('video');if(ol
  if(s.type==='death')return veilDeath(s);
  if(s.type==='meter')return runMeter(s);
  runBeat(s)}
+const WPS=2.29; // measured average edge-tts pace across all VO clips (see TEST_LOG)
 function runBeat(s){if(s.media&&s.media.video&&s.caption!==undefined){return runVideoBeat(s)}
  const lines=(s.vo||'').split('|').filter(Boolean);
- const perLine={t:2.9};let i=0;busy=false;
- playVO(G.scene,lines.length,perLine);
+ const enLines=((SCENES[G.scene]&&SCENES[G.scene].vo)||s.vo||'').split('|').filter(Boolean);
+ const wc=idx=>Math.max(1,((enLines[idx]!==undefined?enLines[idx]:lines[idx])||'').split(/\s+/).filter(Boolean).length);
+ const weights=lines.map((_,idx)=>wc(idx));
+ const totalW=weights.reduce((a,b)=>a+b,0)||1;
+ const state={dur:null};let i=0;busy=false;
+ const a=playVO(G.scene,state);
+ // per-line delay: once real audio duration is known, split it proportionally by each
+ // line's word count (equal division made short lines linger and cut long lines short)
+ const lineDelay=idx=>state.dur
+  ?Math.max(900,state.dur*1000*(weights[idx]/totalW))
+  :Math.max(1400,weights[idx]/WPS*1000);
  const next=()=>{if(i<lines.length){const d=document.createElement('div');d.className='subline';d.textContent=lines[i];
-   $('subs').innerHTML='';$('subs').appendChild(d);i++;
-   const wc=lines[i-1]?Math.max(lines[i-1].split(' ').length,Math.ceil(lines[i-1].length/4)):6;
-   timer=setTimeout(next,voAudio?perLine.t*1000:Math.max(2300,wc*330));
+   $('subs').innerHTML='';$('subs').appendChild(d);
+   const delay=lineDelay(i);i++;
+   timer=setTimeout(next,delay);
   }else if(s.spoiler&&!$('spoilerHost').innerHTML){
    $('spoilerHost').innerHTML='<div id="spoiler">'+s.spoiler+'</div>';
    timer=setTimeout(next,3400);
   }else{finishBeat(s)}};
- next();
+ // wait briefly for real audio duration (usually <50ms for a local clip) so even
+ // line 1 gets accurate proportional timing instead of the word-count estimate
+ let started=false;const start=()=>{if(started)return;started=true;next()};
+ if(a){a.addEventListener('loadedmetadata',start,{once:true});timer=setTimeout(start,200)}
+ else{start()}
  $('stage').onclick=e=>{if(e.target.closest('#menu,#menuBtn,.opt,.bigbtn'))return;
   clearTimeout(timer);
+  if(!started){start();return}
   if(i<lines.length){next()}else if(s.spoiler&&!$('spoilerHost').innerHTML){next()}else{finishBeat(s)}}}
 function runVideoBeat(s){busy=false;
  const d=document.createElement('div');d.className='subline';d.textContent=s.caption;
